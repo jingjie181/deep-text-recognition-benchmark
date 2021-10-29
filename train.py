@@ -21,7 +21,7 @@ char_loaded = open('C:\\Users\\joman\\Desktop\\easyocr\\characters.txt', "r", en
 
 def train(opt):
     """ dataset preparation """
-    if opt.data_filtering_off:
+    if not opt.data_filtering_off:
         print('Filtering the images containing characters which are not in opt.character')
         print('Filtering the images whose label is longer than opt.batch_max_length')
         # see https://github.com/clovaai/deep-text-recognition-benchmark/blob/6593928855fb7abb999a99f428b3e4477d4ae356/dataset.py#L130
@@ -250,7 +250,7 @@ if __name__ == '__main__':
     #                  help='select training data (default is MJ-ST, which means MJ and ST used as training data)') 
     # parser.add_argument('--batch_ratio', type=str, default='0.5-0.5', 
     #                     help='assign ratio for each selected data in the batch') 
-    parser.add_argument('--select_data', type=str, default='/', 
+    parser.add_argument('--select_data', type=str, default='C:/Users/joman/Desktop/easyocr/img/train/img/', 
                      help='select training data (default is MJ-ST, which means MJ and ST used as training data)') 
     parser.add_argument('--batch_ratio', type=str, default='1', 
                      help='assign ratio for each selected data in the batch') 
@@ -262,7 +262,7 @@ if __name__ == '__main__':
     parser.add_argument('--imgW', type=int, default=100, help='the width of the input image')
     parser.add_argument('--rgb', action='store_true', help='use rgb input')
     parser.add_argument('--character', type=str,
-                        default='0123456789กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮ', help='character label')
+                        default='0123456789กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮอะอิอึอุเอะแอะโอะเอาะเออะเอียะเอือะอัวะอำไอใอเอาอาอีอือูเอแอโอออเออเอียเอืออัว', help='character label')
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
     parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--data_filtering_off', action='store_true', help='for data_filtering_off mode')
@@ -291,8 +291,8 @@ if __name__ == '__main__':
     """ vocab / character number configuration """
     if opt.sensitive:
         # opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        # opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
-        opt.character = char_loaded
+        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        # opt.character = char_loaded
 
     """ Seed and GPU setting """
     # print("Random Seed: ", opt.manualSeed)
