@@ -250,7 +250,7 @@ if __name__ == '__main__':
     #                  help='select training data (default is MJ-ST, which means MJ and ST used as training data)') 
     # parser.add_argument('--batch_ratio', type=str, default='0.5-0.5', 
     #                     help='assign ratio for each selected data in the batch') 
-    parser.add_argument('--select_data', type=str, default='C:/Users/joman/Desktop/easyocr/single_line/data_train/test', 
+    parser.add_argument('--select_data', type=str, default='/', 
                      help='select training data (default is MJ-ST, which means MJ and ST used as training data)') 
     parser.add_argument('--batch_ratio', type=str, default='1', 
                      help='assign ratio for each selected data in the batch') 
