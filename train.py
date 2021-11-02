@@ -18,6 +18,7 @@ from model import Model
 from test import validation
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 char_loaded = open('C:\\Users\\joman\\Desktop\\easyocr\\characters.txt', "r", encoding="utf-8")
+lines = char_loaded.readlines()
 
 def train(opt):
     """ dataset preparation """
@@ -30,7 +31,7 @@ def train(opt):
     opt.batch_ratio = opt.batch_ratio.split('-')
     train_dataset = Batch_Balanced_Dataset(opt)
 
-    log = open(f'./saved_models/{opt.exp_name}/log_dataset.txt', 'a')
+    log = open(f'./saved_models/{opt.exp_name}/log_dataset.txt', 'a', encoding="utf-8")
     AlignCollate_valid = AlignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio_with_pad=opt.PAD)
     valid_dataset, valid_dataset_log = hierarchical_dataset(root=opt.valid_data, opt=opt)
     valid_loader = torch.utils.data.DataLoader(
@@ -119,7 +120,7 @@ def train(opt):
 
     """ final options """
     # print(opt)
-    with open(f'./saved_models/{opt.exp_name}/opt.txt', 'a') as opt_file:
+    with open(f'./saved_models/{opt.exp_name}/opt.txt', 'a', encoding="utf-8") as opt_file:
         opt_log = '------------ Options -------------\n'
         args = vars(opt)
         for k, v in args.items():
@@ -129,6 +130,7 @@ def train(opt):
         opt_file.write(opt_log)
 
     """ start training """
+    print('start training')
     start_iter = 0
     if opt.saved_model != '':
         try:
@@ -144,6 +146,7 @@ def train(opt):
 
     while(True):
         # train part
+        # print('train part')
         image_tensors, labels = train_dataset.get_batch()
         image = image_tensors.to(device)
         text, length = converter.encode(labels, batch_max_length=opt.batch_max_length)
@@ -160,10 +163,12 @@ def train(opt):
                 cost = criterion(preds, text, preds_size, length)
 
         else:
+            print('else')
             preds = model(image, text[:, :-1])  # align with Attention.forward
             target = text[:, 1:]  # without [GO] Symbol
             cost = criterion(preds.view(-1, preds.shape[-1]), target.contiguous().view(-1))
 
+        # print('out')
         model.zero_grad()
         cost.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)  # gradient clipping with 5 (Default)
@@ -172,10 +177,11 @@ def train(opt):
         loss_avg.add(cost)
 
         # validation part
+        # print('validation')
         if (iteration + 1) % opt.valInterval == 0 or iteration == 0: # To see training progress, we also conduct validation when 'iteration == 0' 
             elapsed_time = time.time() - start_time
             # for log
-            with open(f'./saved_models/{opt.exp_name}/log_train.txt', 'a') as log:
+            with open(f'./saved_models/{opt.exp_name}/log_train.txt', 'a', encoding="utf-8") as log:
                 model.eval()
                 with torch.no_grad():
                     valid_loss, current_accuracy, current_norm_ED, preds, confidence_score, labels, infer_time, length_of_data = validation(
@@ -216,7 +222,9 @@ def train(opt):
                 log.write(predicted_result_log + '\n')
 
         # save model per 1e+5 iter.
+        print(iteration)
         if (iteration + 1) % 1e+5 == 0:
+            print('saved')
             torch.save(
                 model.state_dict(), f'./saved_models/{opt.exp_name}/iter_{iteration+1}.pth')
 
@@ -257,14 +265,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--total_data_usage_ratio', type=str, default='1.0',
                         help='total data usage ratio, this ratio is multiplied to total number of data.')
-    parser.add_argument('--batch_max_length', type=int, default=100, help='maximum-label-length')
+    parser.add_argument('--batch_max_length', type=int, default=40, help='maximum-label-length')
     parser.add_argument('--imgH', type=int, default=32, help='the height of the input image')
     parser.add_argument('--imgW', type=int, default=100, help='the width of the input image')
     parser.add_argument('--rgb', action='store_true', help='use rgb input')
     # parser.add_argument('--character', type=str,
     #                     default='0123456789กขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮอะอิอึอุเอะแอะโอะเอาะเออะเอียะเอือะอัวะอำไอใอเอาอาอีอือูเอแอโอออเออเอียเอืออัว', help='character label')
     parser.add_argument('--character', type=str,
-                        default='0123456789abcdefghijklmnopqrstuvwxyz', help='character label')
+                        default='0123456789abcdefghijklmnopqrstuvwxyzกขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮอะอิอึอุเอะแอะโอะเอาะเออะเอียะเอือะอัวะอำไอใอเอาอาอีอือูเอแอโอออเออเอียเอืออัว', help='character label')
     parser.add_argument('--sensitive', action='store_true', help='for sensitive character mode')
     parser.add_argument('--PAD', action='store_true', help='whether to keep ratio then pad for image resize')
     parser.add_argument('--data_filtering_off', action='store_true', help='for data_filtering_off mode')
@@ -293,8 +301,9 @@ if __name__ == '__main__':
     """ vocab / character number configuration """
     if opt.sensitive:
         # opt.character += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
-        # opt.character = char_loaded
+        # opt.character = string.printable[:-6]  # same with ASTER setting (use 94 char).
+        opt.character = lines
+        # opt.character = '0123456789abcdefghijklmnopqrstuvwxyzกขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮอะอิอึอุเอะแอะโอะเอาะเออะเอียะเอือะอัวะอำไอใอเอาอาอีอือูเอแอโอออเออเอียเอืออัว'
 
     """ Seed and GPU setting """
     # print("Random Seed: ", opt.manualSeed)
@@ -306,7 +315,7 @@ if __name__ == '__main__':
     cudnn.benchmark = True
     cudnn.deterministic = True
     opt.num_gpu = torch.cuda.device_count()
-    # print('device count', opt.num_gpu)
+    print('device count', opt.num_gpu)
     if opt.num_gpu > 1:
         print('------ Use multi-GPU setting ------')
         print('if you stuck too long time with multi-GPU setting, try to set --workers 0')
@@ -321,5 +330,7 @@ if __name__ == '__main__':
         If you dont care about it, just commnet out these line.)
         opt.num_iter = int(opt.num_iter / opt.num_gpu)
         """
-
+    # opt.character = '0123456789abcdefghijklmnopqrstuvwxyzกขฃคฅฆงจฉชซฌญฎฏฐฑฒณดตถทธนบปผฝพฟภมยรลวศษสหฬอฮอะอิอึอุเอะแอะโอะเอาะเออะเอียะเอือะอัวะอำไอใอเอาอาอีอือูเอแอโอออเออเอียเอืออัว'
+    # opt.character=lines
+    print("training")
     train(opt)
